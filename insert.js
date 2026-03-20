@@ -28,20 +28,7 @@ function topicsRequests() {
     return result;
 }
 
-function createFinalRequest() {
-    return [
-        { replaceAllText: { replaceText: start,                    containsText: { text: '{{START}}',            matchCase: true } } },
-        { replaceAllText: { replaceText: end,                      containsText: { text: '{{END}}',              matchCase: true } } },
-        { replaceAllText: { replaceText: members.length.toString(), containsText: { text: '{{MEMBERS PRESENT}}', matchCase: true } } },
-        { replaceAllText: { replaceText: members.join(', '),        containsText: { text: '{{MEMBERS}}',         matchCase: true } } },
-        { replaceAllText: { replaceText: newMembers.length.toString(), containsText: { text: '{{NEWMEMBERS PRESENT}}', matchCase: true } } },
-        { replaceAllText: { replaceText: newMembers.join(', '),     containsText: { text: '{{NEWMEMBERS}}',      matchCase: true } } },
-        { replaceAllText: { replaceText: parachutes.length.toString(), containsText: { text: '{{PARACHUTES PRESENT}}', matchCase: true } } },
-        { replaceAllText: { replaceText: parachutes.join(', '),     containsText: { text: '{{PARACHUTES}}',      matchCase: true } } },
-        { replaceAllText: { replaceText: externals.length.toString(), containsText: { text: '{{EXTERNALS PRESENT}}', matchCase: true } } },
-        { replaceAllText: { replaceText: externals.join(', '),      containsText: { text: '{{EXTERNALS}}',       matchCase: true } } },
-    ];
-}
+
 
 function createInitialRequest() {
     return [
@@ -93,40 +80,14 @@ function createRequest() {
 
 //  Disable all generate controls while a request is in-flight 
 function lockGenerateControls() {
-    ['insert_button', 'insert_initial_button', 'insert_final_button',
-     'fetch_button', 'fetch_button_b', 'back-from-a', 'back-from-b'].forEach(disableEl);
+    ['insert_button', 'insert_initial_button', 'fetch_button'].forEach(disableEl);
 }
 function unlockGenerateControls() {
     // Restore context-appropriate buttons – fetch buttons are always safe to re-enable
     enableEl('fetch_button');
-    enableEl('fetch_button_b');
-    enableEl('back-from-a');
-    enableEl('back-from-b');
 }
 
-//  insertFinalData: uses the doc-id input (Path B) 
-async function insertFinalData() {
-    const inputStr = document.getElementById('doc-id').value;
-    const inputRegex = /[-\w]{25,}(?!.*[-\w]{25,})/.exec(inputStr);
-    if (inputRegex == null) {
-        showToast('Invalid document link / ID.', 'error');
-        return false;
-    }
-    const inputId = inputRegex[0];
-    copyId = inputId;
 
-    try {
-        await gapi.client.docs.documents.batchUpdate({
-            documentId: inputId,
-            resource: { requests: createFinalRequest() },
-        });
-        return true;
-    } catch (e) {
-        console.error(e);
-        showToast(`Could not update the document: ${e?.result?.error?.message ?? e}`, 'error');
-        return false;
-    }
-}
 
 //  insertData: uses copyId (set by copy.js) 
 async function insertData(requestFunction) {
@@ -185,7 +146,7 @@ async function generateInitialMinutes() {
         await copyTemplate();
         await insertData(createInitialRequest);
         showToast('Initial minutes generated! 🎉', 'success');
-        enableEl('redirect_button_a');
+        enableEl('redirect_button');
     } catch (e) {
         console.error(e);
         showToast('Something went wrong while generating the document.', 'error');
@@ -196,24 +157,7 @@ async function generateInitialMinutes() {
     }
 }
 
-async function generateFinalMinutes() {
-    lockGenerateControls();
-    setLoading('insert_final_button', true);
-    try {
-        const ok = await insertFinalData();
-        if (ok) {
-            showToast('Final minutes inserted! 🎉', 'success');
-            enableEl('redirect_button_b');
-        }
-    } catch (e) {
-        console.error(e);
-        showToast('Something went wrong while inserting final data.', 'error');
-    } finally {
-        setLoading('insert_final_button', false);
-        unlockGenerateControls();
-        enableEl('insert_final_button');
-    }
-}
+
 
 async function generateMinutes() {
     lockGenerateControls();
@@ -222,7 +166,7 @@ async function generateMinutes() {
         await copyTemplate();
         await insertData(createRequest);
         showToast('Minutes generated successfully! 🎉', 'success');
-        enableEl('redirect_button_a');
+        enableEl('redirect_button');
     } catch (e) {
         console.error(e);
         showToast('Something went wrong while generating the document.', 'error');
@@ -235,4 +179,3 @@ async function generateMinutes() {
 
 document.getElementById('insert_button').addEventListener('click', generateMinutes);
 document.getElementById('insert_initial_button').addEventListener('click', generateInitialMinutes);
-document.getElementById('insert_final_button').addEventListener('click', generateFinalMinutes);

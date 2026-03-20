@@ -71,28 +71,12 @@ function activateStep(activeStep) {
 //  Wizard section switcher 
 /**
  * Show one wizard section, hiding all others.
- * @param {string} sectionId  e.g. 'section-auth', 'section-fork', 'path-a', 'path-b'
+ * @param {string} sectionId  e.g. 'section-auth', 'section-action'
  */
 function showSection(sectionId) {
     document.querySelectorAll('.wizard-section').forEach(s => {
         s.classList.toggle('active', s.id === sectionId);
     });
-}
-
-/**
- * Select Path A or Path B, advancing the stepper to step 3.
- * Enables the fetch button for the chosen path.
- * @param {'a'|'b'} path
- */
-function selectPath(path) {
-    showSection(`path-${path}`);
-    activateStep(3);
-    // Enable the fetch button for the chosen path
-    if (path === 'a') {
-        enableEl('fetch_button');
-    } else {
-        enableEl('fetch_button_b');
-    }
 }
 
 //  Reset entire UI to initial state 
@@ -101,58 +85,13 @@ function resetUI() {
     activateStep(1);
     disableEl('auth_button');
     disableEl('fetch_button');
-    disableEl('fetch_button_b');
     disableEl('insert_button');
     disableEl('insert_initial_button');
-    disableEl('insert_final_button');
-    disableEl('redirect_button_a');
-    disableEl('redirect_button_b');
-    document.getElementById('gm_day_a').value = '';
-    document.getElementById('gm_day_b').value = '';
-    document.getElementById('doc-id').value = '';
-    clearDocIdValidation();
+    disableEl('redirect_button');
+    document.getElementById('gm_day').value = '';
 }
 
-//  Real-time doc-id validation 
-const DOC_ID_REGEX = /[-\w]{25,}/;
 
-function validateDocId() {
-    const input = document.getElementById('doc-id');
-    const hint  = document.getElementById('doc-id-hint');
-    const val   = input.value.trim();
-    if (!val) {
-        input.classList.remove('input-error', 'input-ok');
-        hint.textContent = '';
-        return false;
-    }
-    const valid = DOC_ID_REGEX.test(val);
-    input.classList.toggle('input-error', !valid);
-    input.classList.toggle('input-ok',    valid);
-    hint.textContent = valid ? '' : 'Paste a valid Google Docs link or document ID.';
-    return valid;
-}
-
-function clearDocIdValidation() {
-    const input = document.getElementById('doc-id');
-    const hint  = document.getElementById('doc-id-hint');
-    if (input) { input.classList.remove('input-error', 'input-ok'); }
-    if (hint)  { hint.textContent = ''; }
-}
-
-// Attach real-time validation
-document.getElementById('doc-id').addEventListener('input', validateDocId);
-
-//  Back buttons & path selection 
-document.getElementById('path-a-btn').addEventListener('click', () => selectPath('a'));
-document.getElementById('path-b-btn').addEventListener('click', () => selectPath('b'));
-document.getElementById('back-from-a').addEventListener('click', () => {
-    showSection('section-fork');
-    activateStep(2);
-});
-document.getElementById('back-from-b').addEventListener('click', () => {
-    showSection('section-fork');
-    activateStep(2);
-});
 
 // Expose globally so other scripts can call them
 window.showToast    = showToast;
@@ -161,6 +100,4 @@ window.enableEl     = enableEl;
 window.disableEl    = disableEl;
 window.activateStep = activateStep;
 window.showSection  = showSection;
-window.selectPath   = selectPath;
 window.resetUI      = resetUI;
-window.validateDocId = validateDocId;

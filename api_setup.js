@@ -63,9 +63,10 @@ function handleAuthClick() {
             console.error("Error inside token callback:", e);
         }
         setLoading('auth_button', false);
-        // Advance to fork
-        showSection('section-fork');
+        // Advance directly to the action section
+        showSection('section-action');
         activateStep(2);
+        enableEl('fetch_button');
     };
 
     const error_callback = (err) => {
@@ -101,16 +102,14 @@ function handleSignoutClick() {
 
 document.getElementById('auth_button').addEventListener('click', handleAuthClick);
 
-// All three sign-out buttons share the same handler
-['signout_button', 'signout_button_a', 'signout_button_b'].forEach(id => {
-    document.getElementById(id).addEventListener('click', handleSignoutClick);
+// Sign-out buttons
+['signout_button'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', handleSignoutClick);
 });
 
 // Redirect buttons
-document.getElementById('redirect_button_a').addEventListener('click', () => {
-    window.open(`https://docs.google.com/document/d/${copyId}/edit`, '_blank');
-});
-document.getElementById('redirect_button_b').addEventListener('click', () => {
+document.getElementById('redirect_button').addEventListener('click', () => {
     window.open(`https://docs.google.com/document/d/${copyId}/edit`, '_blank');
 });
 

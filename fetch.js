@@ -14,9 +14,6 @@ let end;
 let date;
 let nextChair;
 
-// Which path is active: 'a' or 'b'
-let activePath = 'a';
-
 function handleMembers(data, index) {
     //console.log(data[index].values);
     if (data[index].values === undefined) return [];
@@ -60,10 +57,9 @@ function handleChair(list) {
     return { mainChair: list[1][0], speakers: list[3][0], minutes: list[5][0] };
 }
 
-async function fetchData(path) {
-    activePath = path ?? 'a';
-    const fetchBtnId = activePath === 'b' ? 'fetch_button_b' : 'fetch_button';
-    const dateInputId = activePath === 'b' ? 'gm_day_b' : 'gm_day_a';
+async function fetchData() {
+    const fetchBtnId = 'fetch_button';
+    const dateInputId = 'gm_day';
 
     const dateInput = document.getElementById(dateInputId).value;
     if (!dateInput) {
@@ -105,19 +101,10 @@ async function fetchData(path) {
         nextChair  = handleNextChair(data[7].values, nextWeek);
 
         showToast('Data fetched successfully!', 'success');
-        activateStep(4);
+        activateStep(3); // Changed step from 4 to 3
 
-        if (activePath === 'a') {
-            enableEl('insert_button');
-            enableEl('insert_initial_button');
-        } else {
-            // Only enable insert_final if doc-id is also valid
-            if (validateDocId()) {
-                enableEl('insert_final_button');
-            } else {
-                showToast('Data fetched. Now enter a valid document link to insert final data.', 'info');
-            }
-        }
+        enableEl('insert_button');
+        enableEl('insert_initial_button');
 
     } catch (err) {
         console.error(err);
@@ -128,19 +115,7 @@ async function fetchData(path) {
     }
 }
 
-document.getElementById('fetch_button').addEventListener('click', () => fetchData('a'));
-document.getElementById('fetch_button_b').addEventListener('click', () => fetchData('b'));
-
-// Re-check insert_final_button when doc-id changes after a successful fetch
-document.getElementById('doc-id').addEventListener('input', () => {
-    if (date && activePath === 'b') {
-        if (validateDocId()) {
-            enableEl('insert_final_button');
-        } else {
-            disableEl('insert_final_button');
-        }
-    }
-});
+document.getElementById('fetch_button').addEventListener('click', fetchData);
 
 async function populateDateSelectors() {
     //console.log("populateDateSelectors() execution started.");
@@ -175,9 +150,8 @@ async function populateDateSelectors() {
         const optionsHtml = '<option value="" disabled selected>Select a GM date...</option>' + 
             dateSheets.map(date => `<option value="${date}">${date}</option>`).join('');
             
-        document.getElementById('gm_day_a').innerHTML = optionsHtml;
-        document.getElementById('gm_day_b').innerHTML = optionsHtml;
-        //console.log("Updated innerHTML of gm_day_a and gm_day_b with", dateSheets.length, "options.");
+        document.getElementById('gm_day').innerHTML = optionsHtml;
+        //console.log("Updated innerHTML of gm_day with", dateSheets.length, "options.");
     } catch (err) {
         console.error('Error fetching sheet list', err);
         showToast('Failed to load GM dates from spreadsheet.', 'error');

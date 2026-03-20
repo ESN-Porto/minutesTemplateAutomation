@@ -26,16 +26,11 @@
           <div class="step-connector"></div>
           <div class="step" id="step-2" data-step="2">
             <div class="step-circle">2</div>
-            <span class="step-label">Choose Path</span>
+            <span class="step-label">Pick Date</span>
           </div>
           <div class="step-connector"></div>
           <div class="step" id="step-3" data-step="3">
             <div class="step-circle">3</div>
-            <span class="step-label">Pick Date</span>
-          </div>
-          <div class="step-connector"></div>
-          <div class="step" id="step-4" data-step="4">
-            <div class="step-circle">4</div>
             <span class="step-label">Generate</span>
           </div>
         </div>
@@ -53,28 +48,8 @@
           </div>
         </section>
 
-        <!--  Step 2: Fork  -->
-        <section id="section-fork" class="wizard-section">
-          <h2 class="section-title">What would you like to do?</h2>
-          <div class="fork-grid">
-            <button class="fork-card" id="path-a-btn">
-              <span class="fork-icon">🗒️</span>
-              <span class="fork-title">Start a New GM</span>
-              <span class="fork-desc">Create a fresh minutes document from the template</span>
-            </button>
-            <button class="fork-card" id="path-b-btn">
-              <span class="fork-icon">✅</span>
-              <span class="fork-title">Finish an Existing GM</span>
-              <span class="fork-desc">Fill in the final data on a document you started earlier</span>
-            </button>
-          </div>
-          <div class="button-row secondary-row">
-            <button id="signout_button" class="btn btn-secondary">Sign out</button>
-          </div>
-        </section>
-
-        <!--  Step 3 + 4: Path A  -->
-        <section id="path-a" class="wizard-section">
+        <!--  Step 2 + 3: Action  -->
+        <section id="section-action" class="wizard-section">
           <h2 class="section-title">New GM — fetch &amp; generate</h2>
           <p class="section-desc">
             Source:
@@ -84,8 +59,8 @@
           </p>
 
           <div class="form-group">
-            <label for="gm_day_a" class="form-label">GM Date</label>
-            <select id="gm_day_a" class="form-input">
+            <label for="gm_day" class="form-label">GM Date</label>
+            <select id="gm_day" class="form-input">
               <option value="" disabled selected>Select a GM date...</option>
             </select>
           </div>
@@ -106,68 +81,17 @@
           </div>
 
           <div class="button-row">
-            <button id="redirect_button_a" class="btn btn-success" disabled>
+            <button id="redirect_button" class="btn btn-success" disabled>
               <span class="btn-label">View Result ↗</span>
             </button>
           </div>
 
           <div class="button-row secondary-row">
-            <button class="btn btn-ghost" id="back-from-a">← Back</button>
-            <button id="signout_button_a" class="btn btn-secondary">Sign out</button>
+            <button id="signout_button" class="btn btn-secondary">Sign out</button>
           </div>
         </section>
 
-        <!--  Step 3 + 4: Path B  -->
-        <section id="path-b" class="wizard-section">
-          <h2 class="section-title">Finish Existing GM</h2>
-          <p class="section-desc">
-            Source:
-            <a href="https://docs.google.com/spreadsheets/d/1-FDcnqWohD_0nPwZueZJcULdGTql5RY90bZjoYo7aow/edit" target="_blank">
-              Open GM Agendas Sheet ↗
-            </a>
-          </p>
 
-          <div class="form-group">
-            <label for="gm_day_b" class="form-label">GM Date</label>
-            <select id="gm_day_b" class="form-input">
-              <option value="" disabled selected>Select a GM date...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="doc-id" class="form-label">Existing Document Link or ID</label>
-            <input
-              type="text"
-              id="doc-id"
-              class="form-input"
-              placeholder="https://docs.google.com/document/d/..."
-            />
-            <span class="input-hint" id="doc-id-hint"></span>
-          </div>
-
-          <div class="button-row">
-            <button id="fetch_button_b" class="btn btn-primary" disabled>
-              <span class="btn-label">Fetch Data</span>
-            </button>
-          </div>
-
-          <div class="button-row">
-            <button id="insert_final_button" class="btn btn-primary" disabled>
-              <span class="btn-label">Insert Final Data</span>
-            </button>
-          </div>
-
-          <div class="button-row">
-            <button id="redirect_button_b" class="btn btn-success" disabled>
-              <span class="btn-label">View Result ↗</span>
-            </button>
-          </div>
-
-          <div class="button-row secondary-row">
-            <button class="btn btn-ghost" id="back-from-b">← Back</button>
-            <button id="signout_button_b" class="btn btn-secondary">Sign out</button>
-          </div>
-        </section>
 
       </div><!-- /.card -->
     </div><!-- /.page -->
