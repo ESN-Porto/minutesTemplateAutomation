@@ -30,24 +30,6 @@ function topicsRequests() {
 
 
 
-function createInitialRequest() {
-    return [
-        { replaceAllText: { replaceText: date,                containsText: { text: '{{DATE}}',            matchCase: true } } },
-        { replaceAllText: { replaceText: chair.mainChair,     containsText: { text: '{{MAIN CHAIR}}',      matchCase: true } } },
-        { replaceAllText: { replaceText: nextChair.mainChair, containsText: { text: '{{NEXT MAIN CHAIR}}', matchCase: true } } },
-        { replaceAllText: { replaceText: chair.speakers,      containsText: { text: '{{SPEAKERS}}',        matchCase: true } } },
-        { replaceAllText: { replaceText: nextChair.speakers,  containsText: { text: '{{NEXT SPEAKERS}}',   matchCase: true } } },
-        { replaceAllText: { replaceText: chair.minutes,       containsText: { text: '{{MINUTES}}',         matchCase: true } } },
-        { replaceAllText: { replaceText: nextChair.minutes,   containsText: { text: '{{NEXT MINUTES}}',    matchCase: true } } },
-        {
-            replaceAllText: {
-                replaceText: topics.map(t => t.Title).join('\n'),
-                containsText: { text: '{{TOPIC LIST}}', matchCase: true },
-            },
-        },
-        ...topicsRequests(),
-    ];
-}
 
 function createRequest() {
     return [
@@ -80,11 +62,10 @@ function createRequest() {
 
 //  Disable all generate controls while a request is in-flight 
 function lockGenerateControls() {
-    ['insert_button', 'insert_initial_button', 'fetch_button'].forEach(disableEl);
+    disableEl('generate_button');
 }
 function unlockGenerateControls() {
-    // Restore context-appropriate buttons – fetch buttons are always safe to re-enable
-    enableEl('fetch_button');
+    enableEl('generate_button');
 }
 
 
@@ -139,30 +120,17 @@ async function insertData(requestFunction) {
 }
 
 //  Generate handlers 
-async function generateInitialMinutes() {
-    lockGenerateControls();
-    setLoading('insert_initial_button', true);
-    try {
-        await copyTemplate();
-        await insertData(createInitialRequest);
-        showToast('Initial minutes generated! 🎉', 'success');
-        enableEl('redirect_button');
-    } catch (e) {
-        console.error(e);
-        showToast('Something went wrong while generating the document.', 'error');
-    } finally {
-        setLoading('insert_initial_button', false);
-        unlockGenerateControls();
-        enableEl('insert_initial_button');
-    }
-}
-
-
-
 async function generateMinutes() {
     lockGenerateControls();
-    setLoading('insert_button', true);
+    setLoading('generate_button', true);
+    
     try {
+        const fetchSuccess = await fetchData();
+        if (!fetchSuccess) {
+            return;
+        }
+        activateStep(3);
+        
         await copyTemplate();
         await insertData(createRequest);
         showToast('Minutes generated successfully! 🎉', 'success');
@@ -171,11 +139,9 @@ async function generateMinutes() {
         console.error(e);
         showToast('Something went wrong while generating the document.', 'error');
     } finally {
-        setLoading('insert_button', false);
+        setLoading('generate_button', false);
         unlockGenerateControls();
-        enableEl('insert_button');
     }
 }
 
-document.getElementById('insert_button').addEventListener('click', generateMinutes);
-document.getElementById('insert_initial_button').addEventListener('click', generateInitialMinutes);
+document.getElementById('generate_button').addEventListener('click', generateMinutes);

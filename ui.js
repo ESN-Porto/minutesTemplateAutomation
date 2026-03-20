@@ -84,9 +84,7 @@ function resetUI() {
     showSection('section-auth');
     activateStep(1);
     disableEl('auth_button');
-    disableEl('fetch_button');
-    disableEl('insert_button');
-    disableEl('insert_initial_button');
+    disableEl('generate_button');
     disableEl('redirect_button');
     document.getElementById('gm_day').value = '';
 }

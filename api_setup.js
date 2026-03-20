@@ -66,7 +66,7 @@ function handleAuthClick() {
         // Advance directly to the action section
         showSection('section-action');
         activateStep(2);
-        enableEl('fetch_button');
+        enableEl('generate_button');
     };
 
     const error_callback = (err) => {
@@ -90,23 +90,9 @@ function handleAuthClick() {
     }
 }
 
-function handleSignoutClick() {
-    const token = gapi.client.getToken();
-    if (token !== null) {
-        google.accounts.oauth2.revoke(token.access_token);
-        gapi.client.setToken('');
-        resetUI();
-        showToast('Signed out successfully.', 'info');
-    }
-}
 
 document.getElementById('auth_button').addEventListener('click', handleAuthClick);
 
-// Sign-out buttons
-['signout_button'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', handleSignoutClick);
-});
 
 // Redirect buttons
 document.getElementById('redirect_button').addEventListener('click', () => {

@@ -58,16 +58,13 @@ function handleChair(list) {
 }
 
 async function fetchData() {
-    const fetchBtnId = 'fetch_button';
     const dateInputId = 'gm_day';
 
     const dateInput = document.getElementById(dateInputId).value;
     if (!dateInput) {
         showToast('Please select a GM date first.', 'error');
-        return;
+        return false;
     }
-
-    setLoading(fetchBtnId, true);
 
     date = dateInput;
     const [d, m, y] = date.split('/');
@@ -100,22 +97,15 @@ async function fetchData() {
         [start, end] = handleHours(data[5].values);
         nextChair  = handleNextChair(data[7].values, nextWeek);
 
-        showToast('Data fetched successfully!', 'success');
-        activateStep(3); // Changed step from 4 to 3
-
-        enableEl('insert_button');
-        enableEl('insert_initial_button');
+        return true;
 
     } catch (err) {
         console.error(err);
         const msg = err?.result?.error?.message ?? 'Unknown error';
         showToast(`Error fetching data. Check that a sheet named "${date}" exists in the GM Agendas spreadsheet. (${msg})`, 'error');
-    } finally {
-        setLoading(fetchBtnId, false);
+        return false;
     }
 }
-
-document.getElementById('fetch_button').addEventListener('click', fetchData);
 
 async function populateDateSelectors() {
     //console.log("populateDateSelectors() execution started.");
