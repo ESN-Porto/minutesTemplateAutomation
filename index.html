@@ -1,41 +1,188 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Minutes Template Generator</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-            <img id="logo" alt="ESN Porto logo" src="logo.png">
-            <p><strong>Spreadsheet in use:</strong> <a href="https://docs.google.com/spreadsheets/d/1-FDcnqWohD_0nPwZueZJcULdGTql5RY90bZjoYo7aow/edit" target="_blank">Open GM Agendas Sheet</a></p>
-            <input type="date" id="gm_day">
-            <label for="doc-id">Link of document &lpar;if you want to finish an incomplete template&rpar;:</label>
-            <input type="text" id="doc-id">
-            <button id="auth_button" class="camo_button">Login</button>
-            <button id="signout_button" class="camo_button">Sign out</button>
-            <button id="fetch_button" class="camo_button">Fetch data</button>
-            <button id="insert_button">Insert all data</button>
-            <button id="insert_initial_button">Insert data available at the start of the GM</button>
-            <button id="insert_final_button">Insert data available at the end of the GM</button>
-            <button id="redirect_button">View result</button>
-            <h2>How to use:</h2>
-            <ol>
-                <li>Log in with an ESN Porto Google account;</li>
-                <li>Pick the desired GM's date;</li>
-                <li>Press the buttons as they appear: fetch data, etc</li>
-                <li>If you want to start with just the topics and fill in the rest later:
-                    <ol>
-                        <li>Press "Insert data available at the start of the GM" and use the result</li>
-                        <li>Return to the page at the end of the meeting, paste the document's link in the text field, and use "Insert data available at the end of the GM"</li>
-                    </ol>
-                </li>
-                <li>Press "View Result" to view your template!</li>
-            </ol>
-    </body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ESN Porto – GM Minutes Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!--  Page wrapper  -->
+    <div class="page">
+      <div class="card">
+
+        <!-- Logo -->
+        <img id="logo" alt="ESN Porto logo" src="logo.png" />
+
+        <!--  Stepper  -->
+        <div id="stepper" aria-label="Progress">
+          <div class="step active" id="step-1" data-step="1">
+            <div class="step-circle">1</div>
+            <span class="step-label">Authenticate</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-2" data-step="2">
+            <div class="step-circle">2</div>
+            <span class="step-label">Choose Path</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-3" data-step="3">
+            <div class="step-circle">3</div>
+            <span class="step-label">Pick Date</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-4" data-step="4">
+            <div class="step-circle">4</div>
+            <span class="step-label">Generate</span>
+          </div>
+        </div>
+
+        <!--  Step 1: Auth  -->
+        <section id="section-auth" class="wizard-section active">
+          <h2 class="section-title">Sign in to get started</h2>
+          <p class="section-desc">
+            Use your ESN Porto Google account to access the GM Agendas spreadsheet. If you don't have one yet, please contact the Main Chair or the IT Manager.
+          </p>
+          <div class="button-row">
+            <button id="auth_button" class="btn btn-primary" disabled>
+              <span class="btn-label">Login with Google</span>
+            </button>
+          </div>
+        </section>
+
+        <!--  Step 2: Fork  -->
+        <section id="section-fork" class="wizard-section">
+          <h2 class="section-title">What would you like to do?</h2>
+          <div class="fork-grid">
+            <button class="fork-card" id="path-a-btn">
+              <span class="fork-icon">🗒️</span>
+              <span class="fork-title">Start a New GM</span>
+              <span class="fork-desc">Create a fresh minutes document from the template</span>
+            </button>
+            <button class="fork-card" id="path-b-btn">
+              <span class="fork-icon">✅</span>
+              <span class="fork-title">Finish an Existing GM</span>
+              <span class="fork-desc">Fill in the final data on a document you started earlier</span>
+            </button>
+          </div>
+          <div class="button-row secondary-row">
+            <button id="signout_button" class="btn btn-secondary">Sign out</button>
+          </div>
+        </section>
+
+        <!--  Step 3 + 4: Path A  -->
+        <section id="path-a" class="wizard-section">
+          <h2 class="section-title">New GM — fetch &amp; generate</h2>
+          <p class="section-desc">
+            Source:
+            <a href="https://docs.google.com/spreadsheets/d/1-FDcnqWohD_0nPwZueZJcULdGTql5RY90bZjoYo7aow/edit" target="_blank">
+              Open GM Agendas Sheet ↗
+            </a>
+          </p>
+
+          <div class="form-group">
+            <label for="gm_day_a" class="form-label">GM Date</label>
+            <select id="gm_day_a" class="form-input">
+              <option value="" disabled selected>Select a GM date...</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button id="fetch_button" class="btn btn-primary" disabled>
+              <span class="btn-label">Fetch Data</span>
+            </button>
+          </div>
+
+          <div class="action-group" id="path-a-actions">
+            <button id="insert_initial_button" class="btn btn-primary" disabled>
+              <span class="btn-label">Insert Initial Data</span>
+            </button>
+            <button id="insert_button" class="btn btn-secondary" disabled>
+              <span class="btn-label">Insert All Data</span>
+            </button>
+          </div>
+
+          <div class="button-row">
+            <button id="redirect_button_a" class="btn btn-success" disabled>
+              <span class="btn-label">View Result ↗</span>
+            </button>
+          </div>
+
+          <div class="button-row secondary-row">
+            <button class="btn btn-ghost" id="back-from-a">← Back</button>
+            <button id="signout_button_a" class="btn btn-secondary">Sign out</button>
+          </div>
+        </section>
+
+        <!--  Step 3 + 4: Path B  -->
+        <section id="path-b" class="wizard-section">
+          <h2 class="section-title">Finish Existing GM</h2>
+          <p class="section-desc">
+            Source:
+            <a href="https://docs.google.com/spreadsheets/d/1-FDcnqWohD_0nPwZueZJcULdGTql5RY90bZjoYo7aow/edit" target="_blank">
+              Open GM Agendas Sheet ↗
+            </a>
+          </p>
+
+          <div class="form-group">
+            <label for="gm_day_b" class="form-label">GM Date</label>
+            <select id="gm_day_b" class="form-input">
+              <option value="" disabled selected>Select a GM date...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="doc-id" class="form-label">Existing Document Link or ID</label>
+            <input
+              type="text"
+              id="doc-id"
+              class="form-input"
+              placeholder="https://docs.google.com/document/d/..."
+            />
+            <span class="input-hint" id="doc-id-hint"></span>
+          </div>
+
+          <div class="button-row">
+            <button id="fetch_button_b" class="btn btn-primary" disabled>
+              <span class="btn-label">Fetch Data</span>
+            </button>
+          </div>
+
+          <div class="button-row">
+            <button id="insert_final_button" class="btn btn-primary" disabled>
+              <span class="btn-label">Insert Final Data</span>
+            </button>
+          </div>
+
+          <div class="button-row">
+            <button id="redirect_button_b" class="btn btn-success" disabled>
+              <span class="btn-label">View Result ↗</span>
+            </button>
+          </div>
+
+          <div class="button-row secondary-row">
+            <button class="btn btn-ghost" id="back-from-b">← Back</button>
+            <button id="signout_button_b" class="btn btn-secondary">Sign out</button>
+          </div>
+        </section>
+
+      </div><!-- /.card -->
+    </div><!-- /.page -->
+
+    <!--  Toast container  -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Scripts -->
     <script src="config.js"></script>
+    <script src="ui.js"></script>
     <script src="api_setup.js"></script>
     <script src="fetch.js"></script>
     <script src="copy.js"></script>
     <script src="insert.js"></script>
     <script async src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+  </body>
 </html>
