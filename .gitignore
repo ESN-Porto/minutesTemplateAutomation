@@ -65,6 +65,10 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.*
+!.env.example
+service-account*.json
+credentials*.json
 
 # Local configuration with secrets
 config.js
