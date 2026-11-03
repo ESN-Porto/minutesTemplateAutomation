@@ -76,7 +76,7 @@ async function showAuthorizedInterface(session) {
       notify(error.message, 'error');
       return;
     }
-    $('agenda-status').textContent = 'Signed in. The agenda integration is not available yet.';
+    $('agenda-status').textContent = `Signed in, but meeting dates could not be loaded: ${error.message}`;
     $('generate_button').disabled = true;
   }
 }

@@ -2,38 +2,30 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
+function configError(message, code = 'GOOGLE_CONFIG_MISSING') {
+  return Object.assign(new Error(message), { code, status: 503, safeToExpose: true });
+}
+
 function loadCredentials(env = process.env) {
   const json = env.GOOGLE_SERVICE_ACCOUNT_JSON;
   const filename = env.GOOGLE_SERVICE_ACCOUNT_FILE;
-  if ((!json && !filename) || (json && filename)) {
-    const error = new Error('Configure exactly one Google service-account credential source.');
-    error.code = 'GOOGLE_CONFIG_MISSING';
-    throw error;
-  }
+  if (!json && !filename) throw configError('Missing GOOGLE_SERVICE_ACCOUNT_JSON (or a local service-account file).');
   let credentials;
   try {
     const serialized = json || fs.readFileSync(path.resolve(process.cwd(), filename), 'utf8');
     credentials = JSON.parse(serialized);
   } catch {
-    const error = new Error('Google integration credentials are invalid.');
-    error.code = 'GOOGLE_CONFIG_INVALID';
-    throw error;
+    throw configError('Google service-account credentials are invalid. Check GOOGLE_SERVICE_ACCOUNT_JSON.', 'GOOGLE_CONFIG_INVALID');
   }
   if (!credentials.client_email || !credentials.private_key) {
-    const error = new Error('Google integration credentials are invalid.');
-    error.code = 'GOOGLE_CONFIG_INVALID';
-    throw error;
+    throw configError('Google service-account credentials are missing client_email or private_key.', 'GOOGLE_CONFIG_INVALID');
   }
   return credentials;
 }
 
 function createGoogleServices(env = process.env, deps = {}) {
-  const { GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SPREADSHEET_ID, GOOGLE_TEMPLATE_ID, GOOGLE_DESTINATION_FOLDER_ID } = env;
-  if ((!GOOGLE_SERVICE_ACCOUNT_JSON && !env.GOOGLE_SERVICE_ACCOUNT_FILE) || !GOOGLE_SPREADSHEET_ID || !GOOGLE_TEMPLATE_ID || !GOOGLE_DESTINATION_FOLDER_ID) {
-    const error = new Error('Google integration is not configured.');
-    error.code = 'GOOGLE_CONFIG_MISSING';
-    throw error;
-  }
+  const { GOOGLE_SPREADSHEET_ID, GOOGLE_TEMPLATE_ID, GOOGLE_DESTINATION_FOLDER_ID } = env;
+  if (!GOOGLE_SPREADSHEET_ID) throw configError('Missing GOOGLE_SPREADSHEET_ID.');
   const credentials = loadCredentials(env);
   const scopes = [
     'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -51,15 +43,18 @@ function createGoogleServices(env = process.env, deps = {}) {
     const tokenUri = credentials.token_uri || 'https://oauth2.googleapis.com/token';
     const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
     const unsigned = `${encode({ alg: 'RS256', typ: 'JWT' })}.${encode({ iss: credentials.client_email, scope: scopes.join(' '), aud: tokenUri, iat: now, exp: now + 3600 })}`;
-    const assertion = `${unsigned}.${crypto.sign('RSA-SHA256', Buffer.from(unsigned), credentials.private_key).toString('base64url')}`;
+    let signature;
+    try { signature = crypto.sign('RSA-SHA256', Buffer.from(unsigned), credentials.private_key).toString('base64url'); }
+    catch { throw configError('The service-account private key is invalid. Check GOOGLE_SERVICE_ACCOUNT_JSON.', 'GOOGLE_CONFIG_INVALID'); }
+    const assertion = `${unsigned}.${signature}`;
     const response = await fetchFn(tokenUri, {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) throw new Error('Google authentication failed.');
+    if (!response.ok) throw configError('Google rejected the service-account credentials. Check GOOGLE_SERVICE_ACCOUNT_JSON.', 'GOOGLE_AUTH_FAILED');
     const result = await response.json();
-    if (!result.access_token) throw new Error('Google authentication failed.');
+    if (!result.access_token) throw configError('Google authentication did not return a token.', 'GOOGLE_AUTH_FAILED');
     cachedToken = result.access_token;
     expiresAt = Date.now() + Number(result.expires_in || 3600) * 1000;
     return cachedToken;
@@ -170,6 +165,7 @@ function topicFormattingRequests(content, topics) {
 }
 
 async function createMinutesDocument({ drive, docs, folderId, templateId, meeting }) {
+  if (!folderId || !templateId) throw configError('Missing GOOGLE_TEMPLATE_ID or GOOGLE_DESTINATION_FOLDER_ID.');
   const copied = await drive.files.copy({
     fileId: templateId,
     supportsAllDrives: true,

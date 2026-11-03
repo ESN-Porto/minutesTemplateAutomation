@@ -9,6 +9,23 @@ test('requires all server-only Google configuration', () => {
   assert.throws(() => createGoogleServices({}), { code: 'GOOGLE_CONFIG_MISSING' });
 });
 
+test('listing dates does not require a template or destination folder', async () => {
+  const env = { GOOGLE_SERVICE_ACCOUNT_JSON: JSON.stringify({ client_email: 'test@example.org', private_key: 'test' }), GOOGLE_SPREADSHEET_ID: 'source' };
+  const services = createGoogleServices(env, { tokenProvider: async () => 'token', fetchFn: async () => ({ ok: true, json: async () => ({ sheets: [] }) }) });
+  assert.deepEqual((await services.sheets.spreadsheets.get({ spreadsheetId: 'source', fields: 'sheets.properties.title' })).data, { sheets: [] });
+});
+
+test('a server JSON credential takes precedence over a local file path', () => {
+  const json = JSON.stringify({ client_email: 'test@example.org', private_key: 'test' });
+  assert.equal(loadCredentials({ GOOGLE_SERVICE_ACCOUNT_JSON: json, GOOGLE_SERVICE_ACCOUNT_FILE: '/unavailable/local/file' }).client_email, 'test@example.org');
+});
+
+test('document creation rejects missing destination before copying', async () => {
+  let copied = false;
+  await assert.rejects(createMinutesDocument({ drive: { files: { copy: async () => { copied = true; } } }, docs: {}, templateId: 'template', meeting: {} }), { code: 'GOOGLE_CONFIG_MISSING' });
+  assert.equal(copied, false);
+});
+
 test('loads a local service-account JSON file without requiring credentials in source or chat', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'minutes-sa-'));
   const filename = path.join(dir, 'service-account.json');
