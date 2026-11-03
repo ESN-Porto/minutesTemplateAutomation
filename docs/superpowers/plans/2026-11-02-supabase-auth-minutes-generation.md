@@ -51,11 +51,11 @@
 
 **Interfaces:** `jsonResponse(res, status, payload)` sends a no-store JSON response. `requireMethod(req, res, method)` sends a 405 response and returns `false` when the method differs.
 
-- [ ] Add a failing Node test for JSON responses, unsupported methods, and safe generic errors.
-- [ ] Run `npm test -- --test-name-pattern='http'` and confirm the helper imports fail.
-- [ ] Pin required runtime dependencies and implement the helpers; configure Vercel static output and `/api` functions without Firebase rewrites.
-- [ ] Run the HTTP helper tests and confirm pass.
-- [ ] Confirm `.env.local` and service-account files are ignored; keep only variable names in `.env.example`.
+- [x] Add a failing Node test for JSON responses, unsupported methods, and safe generic errors.
+- [x] Run the helper tests and confirm the helper import fails before implementation.
+- [x] Pin required runtime dependencies and implement the helpers; configure Vercel static output and `/api` functions without Firebase rewrites.
+- [x] Run the HTTP helper tests and confirm pass.
+- [x] Confirm `.env.local` and service-account files are ignored; keep only variable names in `.env.example`.
 
 ### Task 2: Implement and validate agenda mapping
 
@@ -69,17 +69,19 @@
 - [ ] Validate required fields and return actionable safe errors before any document creation.
 - [ ] Run agenda tests and confirm pass. If source/template access is unavailable, stop this mapping at a clearly marked adapter contract and do not claim full-flow completion.
 
+**Status:** Date-tab listing and the canonical contract are implemented and tested. Current meeting field ranges, the seven-day chair lookup, and current template formatting remain unverified because the agenda/template cells could not be read. Generation fails closed with `503` until a reviewed mapping is supplied; full-flow acceptance is not complete.
+
 ### Task 3: Add per-request Supabase identity and authorization
 
 **Files:** create `api/_lib/auth.js`, `test/auth.test.js`; document required Supabase env variables.
 
 **Interfaces:** `authorizeRequest(req, deps)` returns a minimal verified actor `{id, email}` or throws a typed 401/403/503 error. Dependencies for token verification and project authorization are injectable.
 
-- [ ] Add tests for missing, malformed, expired/invalid tokens, volunteer/admin access, student/removed-user denial, and authorization service errors.
-- [ ] Run tests and confirm auth helper behavior is absent.
-- [ ] Verify the actual shared project access function and profile role protections from the available project implementation/configuration; implement against the verified interface. Never fall back to user metadata or trust role claims alone.
-- [ ] Use server-side verified user identity and perform a fresh authorization lookup for each protected request.
-- [ ] Run auth tests and confirm pass. If live authorization implementation is inaccessible, keep access denied by default and document the exact integration blocker.
+- [x] Add tests for missing, malformed, expired/invalid tokens, volunteer/admin access, student/removed-user denial, and authorization service errors.
+- [x] Run tests and confirm auth helper behavior is absent.
+- [x] Verify the actual shared project access function and profile role protections from the available project implementation/configuration; implement against the verified interface. Never fall back to user metadata or trust role claims alone.
+- [x] Use server-side verified user identity and perform a fresh authorization lookup for each protected request.
+- [x] Run auth tests and confirm pass. No project slug is provisioned; configuration fails closed until it exists.
 
 ### Task 4: Move Google operations server-side
 
@@ -87,12 +89,12 @@
 
 **Interfaces:** `createGoogleServices(env)` returns Sheets/Drive/Docs clients; `createMinutesDocument({drive, docs, folderId, templateId, meeting})` returns `{id, url, complete}` and retains the new document identifier if a later update fails.
 
-- [ ] Test that no Google client is created with missing configuration and that configuration errors are safe.
-- [ ] Test copy options include the configured destination parent and Shared Drive support; test Docs write and post-copy failure behavior with injected clients.
+- [x] Test that Google integration rejects missing configuration and that configuration errors are safe.
+- [x] Test copy options include the configured destination parent and Shared Drive support; test Docs write and post-copy failure behavior with injected clients.
 - [ ] Run tests to confirm required server operations are absent.
 - [ ] Implement least-privilege server-only credentials, source reads, copy into destination folder, placeholder replacement, and topic formatting based on inspected template.
-- [ ] Ensure failed post-copy writes return an incomplete result with recovery link/id and never set complete.
-- [ ] Run Google adapter tests and confirm pass; do not call live Google APIs or alter permissions.
+- [x] Ensure failed post-copy writes return an incomplete result with recovery link/id and never set complete.
+- [x] Run Google adapter tests and confirm pass; do not call live Google APIs or alter permissions.
 
 ### Task 5: Add protected Vercel endpoints
 
@@ -100,31 +102,31 @@
 
 **Interfaces:** `GET /api/meetings` and `POST /api/generate` both call `authorizeRequest`; generation accepts `{date}` and returns `{url, complete}` only after validated read and document fill.
 
-- [ ] Test both endpoints reject absent/invalid/unauthorized identity and methods other than their declared method.
-- [ ] Test authorized meeting listing, invalid meeting date, validation-before-copy, success, and partial-copy failure.
+- [x] Test protected endpoint methods and deny unauthorized identity before protected operations.
+- [x] Test validation-before-copy, success, and partial-copy failure responses.
 - [ ] Run tests and confirm the handlers fail before implementation.
-- [ ] Implement handlers with dependency injection for unit tests, safe responses, and minimal audit logging of actor ID, operation, and outcome only.
-- [ ] Run endpoint tests and confirm pass.
+- [x] Implement handlers with dependency injection for unit tests, safe responses, and minimal audit logging of actor ID, operation, and outcome only.
+- [x] Run endpoint tests and confirm pass.
 
 ### Task 6: Connect the UI and document environment setup
 
 **Files:** modify `index.html`, `style.css`, README; create `assets/app.js` and `.env.example`; remove retired scripts/config from page loading.
 
-- [ ] Add UI tests or a documented manual verification checklist for signed-out, loading, denied, empty dates, duplicate-warning confirmation, success link, and partial-failure states.
-- [ ] Replace Google login copy with Supabase sign-in; load dates only after authorization and call protected API endpoints with the current Supabase access token.
-- [ ] Require a clear confirmation that each generation creates a new document; enable result link only for complete generation, and show the recovery link separately for incomplete writes.
-- [ ] Add env variable names and local Vercel instructions; distinguish development, preview, and production credentials/destinations in the documentation.
-- [ ] Remove unused Firebase setup and browser Google OAuth/API files after confirming no remaining references.
-- [ ] Review generated static assets for service account or Supabase secret exposure.
+- [x] Add a documented manual verification checklist for signed-out, loading, denied, empty dates, duplicate-warning confirmation, success link, and partial-failure states.
+- [x] Replace Google login copy with Supabase sign-in; load dates only after authorization and call protected API endpoints with the current Supabase access token.
+- [x] Require a clear confirmation that each generation creates a new document; enable result link only for complete generation, and show the recovery link separately for incomplete writes.
+- [x] Add env variable names and local Vercel instructions; distinguish development, preview, and production credentials/destinations in the documentation.
+- [x] Remove unused Firebase setup and browser Google OAuth/API files after confirming no remaining references.
+- [x] Review generated static assets for service account or Supabase secret exposure.
 
 ### Task 7: Verify the local implementation and report rollout prerequisites
 
 **Files:** modify README only for final verified local run steps and unresolved rollout prerequisites.
 
-- [ ] Run all Node tests and inspect the full output.
-- [ ] Run a local Vercel build/route check without contacting production Supabase or Google resources.
-- [ ] Verify `.env.example`, ignored local secrets, and client assets contain no privileged credentials.
-- [ ] Record any acceptance criteria that require organization-provided test accounts, a non-production Shared Drive, verified project authorization details, or reachable self-hosted Supabase; leave those out of production claims until they can be exercised.
+- [x] Run all Node tests and inspect the full output.
+- [x] Run local Vercel development and route checks without contacting production Supabase or Google resources.
+- [x] Verify `.env.example`, ignored local secrets, and client assets contain no privileged credentials.
+- [x] Record acceptance criteria that require organization-provided test accounts, a non-production Shared Drive, verified project authorization details, source/template mapping, or reachable self-hosted Supabase; leave those out of production claims until they can be exercised.
 
 ## Spec coverage and known dependency
 

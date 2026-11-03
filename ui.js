@@ -17,10 +17,12 @@ function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <span class="toast-icon">${TOAST_ICONS[type] ?? '🔔'}</span>
-        <span>${message}</span>
-    `;
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.textContent = TOAST_ICONS[type] ?? '🔔';
+    const content = document.createElement('span');
+    content.textContent = message;
+    toast.append(icon, content);
     container.appendChild(toast);
 
     setTimeout(() => {

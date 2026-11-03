@@ -38,21 +38,26 @@
         <!--  Step 1: Auth  -->
         <section id="section-auth" class="wizard-section active">
           <h2 class="section-title">Sign in to get started</h2>
-          <p class="section-desc">
-            Use your ESN Porto Google account to access the GM Agendas spreadsheet. If you don't have one yet, please contact the Main Chair or the IT Manager.
-          </p>
+          <p class="section-desc">Use your existing ESN Porto account. Volunteer or administrator access is checked for every request.</p>
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" class="form-input" type="email" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input id="password" class="form-input" type="password" autocomplete="current-password" required />
+          </div>
           <div class="button-row">
-            <button id="auth_button" class="btn btn-primary" disabled>
-              <span class="btn-label">Login with Google</span>
-            </button>
+            <button id="auth_button" class="btn btn-primary"><span class="btn-label">Sign in</span></button>
           </div>
         </section>
 
         <!--  Step 2 + 3: Action  -->
         <section id="section-action" class="wizard-section">
+          <p id="agenda-status" class="section-desc" role="status">Checking agenda availability...</p>
           <p class="section-desc">
             Source:
-            <a href="https://docs.google.com/spreadsheets/d/1-FDcnqWohD_0nPwZueZJcULdGTql5RY90bZjoYo7aow/edit" target="_blank">
+            <a href="https://docs.google.com/spreadsheets/d/10hxz_UfN27ZV4lzKeUQ3vNl78pOixWU_oFo0FrGTOM0/edit?gid=744514008" target="_blank" rel="noreferrer">
               Open GM Agendas Sheet ↗
             </a>
           </p>
@@ -71,7 +76,9 @@
             <button id="redirect_button" class="btn btn-navy" disabled>
               <span class="btn-label">View Result ↗</span>
             </button>
+            <button id="signout_button" class="btn btn-navy" type="button">Sign out</button>
           </div>
+          <div id="generation-result" aria-live="polite"></div>
 
         </section>
 
@@ -84,13 +91,7 @@
     <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Scripts -->
-    <script src="config.js"></script>
     <script src="ui.js"></script>
-    <script src="api_setup.js"></script>
-    <script src="fetch.js"></script>
-    <script src="copy.js"></script>
-    <script src="insert.js"></script>
-    <script async src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script type="module" src="assets/app.js"></script>
   </body>
 </html>

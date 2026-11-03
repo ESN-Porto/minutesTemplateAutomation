@@ -181,6 +181,13 @@ body {
 }
 .section-desc a:hover { text-decoration: underline; }
 
+#generation-result a {
+  display: inline-block;
+  color: var(--esn-cyan);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
 /* 
    Fork grid
     */

@@ -12,8 +12,12 @@ function requireMethod(req, res, method) {
 }
 
 function safeErrorResponse(res, error, logger = console) {
-  logger.error('Request failed', { name: error?.name || 'Error' });
-  return jsonResponse(res, 500, { error: 'The request could not be completed.' });
+  const status = Number.isInteger(error?.status) ? error.status : 500;
+  logger.error('Request failed', { name: error?.name || 'Error', code: error?.code || 'UNEXPECTED' });
+  if (error?.code === 'DOCUMENT_INCOMPLETE') {
+    return jsonResponse(res, 502, { error: 'The document was created but could not be filled.', recovery: error.document });
+  }
+  return jsonResponse(res, status, { error: error?.safeToExpose ? error.message : 'The request could not be completed.' });
 }
 
 module.exports = { jsonResponse, requireMethod, safeErrorResponse };
