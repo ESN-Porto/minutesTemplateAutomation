@@ -71,7 +71,7 @@ service-account*.json
 credentials*.json
 
 # Local configuration with secrets
-config.js
+/config.js
 
 # dataconnect generated files
 .dataconnect
