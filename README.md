@@ -1,10 +1,55 @@
 # ESN Porto GM minutes generator
 
-Static browser UI with protected Vercel Functions. The browser signs in with the existing Supabase Auth project. Every protected request verifies the access token with Supabase and calls the existing `has_project_access` RPC with the verified user ID. Google Sheets, Drive and Docs operations use server-only service-account credentials.
+A web app that creates General Meeting minutes from the GM agenda spreadsheet. An authorized volunteer selects a meeting and confirms generation; the app copies a Google Docs template into the configured Shared Drive or folder, fills it with the available meeting data, and returns a link to the new document. Every confirmation creates a new document.
+
+The deployed app is available at [minutes-auto.vercel.app](https://minutes-auto.vercel.app/).
+
+## How it works
+
+1. The user signs in with their [IT Manager](https://it.esnporto.org/login) account. A volunteer account is required; an `@esnporto.org` email address is not required. Contact the IT Manager administrators if you need an invitation or volunteer access.
+2. The browser signs in through the shared Supabase Auth project. For every protected request, the server validates the access token with Supabase and checks the verified user against the `has_project_access` function and the configured project slug. The current project is `minutes_generator`, configured for staff access; the shared access policy determines who is allowed in.
+3. The server uses a Google service account to read the agenda spreadsheet. Meeting tabs named as valid dates in `DD/MM/YYYY` format appear in the selector, newest first.
+4. After confirmation, the server reads the selected meeting, copies the configured Google Docs template to the destination, and fills the copy with the date, times, chairing teams, attendance and agenda topics. It also formats topic headings and labels.
+5. The app shows a link to the new document and any warnings about missing information. Missing or invalid individual fields are left blank; users should review and complete the document. The next chairing team is looked up for exactly seven days after the selected meeting. If it cannot be identified, its fields are left blank with a warning.
+
+If the copy is created but filling it fails, the app reports the failure and provides a recovery link to the incomplete document. Review that document before trying again: another confirmation creates another copy.
+
+**App access and Google Drive access are separate.** The service account creates the documents, but the application does not automatically grant users permission to open them. Give the appropriate Google Group or people access to the destination Shared Drive or folder using Google Drive's sharing settings. A document link alone does not grant access.
+
+## Annual maintenance
+
+The spreadsheet mapping reflects the **2026/27 agenda layout**. At the start of each academic year, a maintainer should:
+
+1. Set `GOOGLE_SPREADSHEET_ID` to the current agenda workbook ID if the workbook has changed. The ID is the part of its Google Sheets URL between `/d/` and the next `/`.
+2. Review [api/_lib/agenda.js](api/_lib/agenda.js). The chairing-team tab is currently hard-coded as `Chairing Teams 26/27` and must be updated for the new year. Meeting data is currently read from `P1:AR66`, and the team table from `B2:E100`. Check that the ranges, header names, row positions, presence values, date format and topic fields still match the new agenda. Update the mapping and its tests if the layout changes.
+3. Review the Google Docs template. If a new template is used, set `GOOGLE_TEMPLATE_ID` to its document ID and grant the service account Viewer access. Update `GOOGLE_DESTINATION_FOLDER_ID` if the destination has changed.
+4. If template placeholders or its structure change, update the replacement and formatting logic in [api/_lib/google.js](api/_lib/google.js) and the corresponding tests. The generator expects all of its placeholders to be present; a missing placeholder makes generation fail after the copy is created.
+5. Run the tests, deploy the updated configuration and code, and check an actual meeting and generated document: data, warnings, formatting, destination and access for intended users.
+
+The current template uses `{{DATE}}`, `{{START}}`, `{{END}}`, `{{MAIN CHAIR}}`, `{{SPEAKERS}}`, `{{MINUTES}}`, `{{NEXT MAIN CHAIR}}`, `{{NEXT SPEAKERS}}`, `{{NEXT MINUTES}}`, `{{TOPIC LIST}}`, `{{TOPICS}}`, and the attendance placeholders for `MEMBERS`, `NEWMEMBERS`, `EXTERNALS` and `PARACHUTES`, including each category's `PRESENT` count (for example, `{{MEMBERS PRESENT}}`). Placeholder matching is case-sensitive.
+
+## Setup and configuration
+
+Use Node.js 22 and the Vercel CLI. Copy `.env.example` to `.env.local` and configure:
+
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_URL` | Shared Supabase project URL, also used by the browser. |
+| `SUPABASE_ANON_KEY` | Public Supabase anon key, also used by the browser. |
+| `SUPABASE_PROJECT_SLUG` | Server-side project access identifier; currently `minutes_generator`. The project and its policy must already exist in the shared registry. |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | Local development only: absolute path to the service-account JSON key outside the publicly served project directory. |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Full service-account JSON, stored as a secret environment variable in Vercel. If both credential variables are set, this takes precedence. |
+| `GOOGLE_SPREADSHEET_ID` | Agenda spreadsheet ID. |
+| `GOOGLE_TEMPLATE_ID` | Google Docs template ID. |
+| `GOOGLE_DESTINATION_FOLDER_ID` | Destination Shared Drive or folder ID. |
+
+The Supabase URL and anon key are public client configuration; the Google service-account key is secret. Never commit the key or paste it into chat. `.env.local` and service-account JSON files are ignored by Git. Keep local credentials outside the directory served by the development server.
+
+Enable the Google Sheets, Google Drive and Google Docs APIs in the service account's Google Cloud project. Share the agenda spreadsheet and template with the service account's email as **Viewer**, and give it **Contributor** access to the destination Shared Drive, or the narrowest folder access that allows it to copy and edit the new documents. Google Workspace policies and template copy restrictions can still prevent access; ask the Workspace administrator if needed.
+
+For Vercel, configure the variables for the appropriate environment and keep `GOOGLE_SERVICE_ACCOUNT_FILE` unset. Use separate credentials and destinations for development, preview and production; do not give preview deployments production Google credentials. Redeploy after changing Vercel environment variables so the new values take effect.
 
 ## Local development
-
-Use Node.js 22 and the Vercel CLI. Copy `.env.example` to `.env.local`, fill in the Supabase and Google values, then run:
 
 ```sh
 npm install
@@ -12,38 +57,24 @@ npm test
 npm run local
 ```
 
-For local Google access, store the downloaded key outside the repository's publicly served directory and set `GOOGLE_SERVICE_ACCOUNT_FILE` to its absolute path in `.env.local`. Do not paste the JSON key into chat. For Vercel, set `GOOGLE_SERVICE_ACCOUNT_JSON` as a Secret and leave `GOOGLE_SERVICE_ACCOUNT_FILE` unset.
+`npm run local` loads `.env.local` and starts the Vercel development server. Sign in with an account authorized for the configured Supabase project to exercise the protected endpoints. Generation creates a real Google document in the configured destination.
 
-Share the agenda spreadsheet with the service account's `client_email` as **Viewer**, and share the template as **Viewer**. Give it **Contributor** access to the destination Shared Drive (or the narrowest folder access that permits copying and editing newly created files). The application does not change sharing permissions automatically. The spreadsheet ID is already in `.env.example`; provide the template and destination folder IDs in the environment.
+## Troubleshooting
 
-Also enable the Google Sheets API, Google Drive API, and Google Docs API in the service account's Google Cloud project. Workspace sharing rules can prevent external or service-account access, and Drive copy restrictions can block copying even when the account can view the template; verify those constraints with the Workspace administrator.
+- **Sign-in is disabled:** check `SUPABASE_URL` and `SUPABASE_ANON_KEY` for the deployed environment, then redeploy.
+- **Signed in but access denied:** check the account's volunteer access and the `minutes_generator` policy in the shared IT Manager/Supabase project.
+- **Dates do not load / `GOOGLE_CONFIG_MISSING`:** check `GOOGLE_SPREADSHEET_ID` and the service-account credentials in the active environment. Confirm the account can read the spreadsheet and the Sheets API is enabled.
+- **A date is missing:** its sheet tab must be named as a valid `DD/MM/YYYY` date.
+- **Generation fails or fields are missing:** check template and destination IDs, Google permissions, the current spreadsheet mapping, warnings and template placeholders. If a recovery link is shown, inspect the incomplete copy.
+- **A user cannot open the generated document:** check the user's Google Drive or group membership and the destination's sharing permissions; app login does not grant Drive access.
 
-`.env.local` and service-account JSON files are ignored by git. The Supabase URL and anon key are public client configuration; `SUPABASE_PROJECT_SLUG` is server-side authorization configuration. The slug must already exist in the shared project's project registry and its access policy must be appropriate for this application. This repository does not provision it.
-
-Configure development, preview, and production with separate Google destinations and credentials. Do not give preview deployments production Google credentials. Changing Vercel environment variables requires a new deployment before those values take effect.
-
-## Current integration boundaries
-
-- The server validates each token against Supabase Auth's `/auth/v1/user`, then calls `has_project_access` with the returned user ID. Requests fail closed on missing configuration, auth failure, access denial, or RPC failure.
-- Read-only review of the current shared database found `has_project_access` executable by `PUBLIC` and accepting an arbitrary user ID. This application always passes the ID returned by verified `getUser`, but direct RPC callers may be able to probe the function's boolean access result for other IDs. Review this exposure before rollout; it was not changed here.
-- `api/_lib/agenda.js` reads the 2026/27 meeting layout using its current headers and the `Chairing Teams 26/27` tab. It was checked read-only against the 26 October meeting, including attendance counts, start/end times, topics and the team seven days later. A differently structured workbook needs a reviewed mapping.
-- Missing or invalid individual fields are left blank, and the result lists items to review. The next chairing team still uses the date seven days later; if no unambiguous entry exists, its fields remain blank. A missing attendance name leaves that category's count blank rather than presenting an incomplete count as exact.
-- The original `Auto Minutes Template` has the 19 expected placeholders, and the service account can read and copy it. The adapter replaces those fields and formats topic headings and labels. A live write and visual review of the generated document have not yet been performed.
-- The shared Supabase registry contains `minutes_generator` as an active `staff_only` project with signup disabled. Set `SUPABASE_PROJECT_SLUG` to that value. The local service account can read the current source and template and has add-file capability on the selected Shared Drive. Real HTTP allowed/denied checks, a confirmed generation and a visual document review remain necessary before rollout.
-
-## Manual UI checklist
-
-- Signed out: only the Supabase email/password sign-in form is available.
-- Authorized volunteer/admin: meeting dates load; unauthorized students receive a denial.
-- Select no date: generation is blocked with an actionable message.
-- Confirm generation: the UI states that each confirmation creates a new document.
-- Complete generation: a validated Google Docs link is shown.
-- Partial failure after copy: generation is reported as failed and the recovery link is shown separately.
-- Sign out: protected controls and prior result links are cleared.
+The shared `has_project_access` function has historically been callable with an arbitrary user ID. This app passes only the ID returned by Supabase's verified user lookup, but maintainers of the shared project should review direct RPC access and its implications separately.
 
 ## Project structure
 
-- `index.html`, `style.css`, `ui.js`, `assets/app.js`: static UI and Supabase sign-in.
-- `api/session.js`, `api/meetings.js`, `api/generate.js`, `api/config.js`: Vercel Functions.
-- `api/_lib/auth.js`, `agenda.js`, `google.js`, `http.js`: authorization, agenda adapter contract, server-only Google integration, and response helpers.
-- `test/`: Node built-in tests with injected clients.
+- `index.html`, `style.css`, `ui.js`, `assets/app.js`: browser interface and sign-in.
+- `api/config.js`, `api/session.js`, `api/meetings.js`, `api/generate.js`: Vercel endpoints.
+- `api/_lib/auth.js`: server-side authentication and project authorization.
+- `api/_lib/agenda.js`: meeting discovery and spreadsheet mapping.
+- `api/_lib/google.js`: server-side Google credentials, API requests and document generation.
+- `test/`: Node.js tests for the endpoints and integration logic.
